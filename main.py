@@ -6,24 +6,32 @@ from utils import generate_code_from_prompt
 
 app = FastAPI()
 
-# CORS for frontend
+# ✅ Allow CORS for localhost + Netlify + any others you need
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://dancing-mousse-c5c6d5.netlify.app",  # your Netlify frontend
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Define message schema
+# ✅ Root route for health check
+@app.get("/")
+def read_root():
+    return {"message": "AI backend is live!"}
+
+# ✅ Message structure
 class ChatMessage(BaseModel):
     role: str  # 'user' or 'assistant'
     content: str
 
-# Request with full message history
 class CodeRequest(BaseModel):
     messages: List[ChatMessage]
 
+# ✅ Code generation route
 @app.post("/generate_code")
 def generate_code(request: CodeRequest):
     try:
