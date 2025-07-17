@@ -1,25 +1,27 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-from utils import generate_code_from_prompt  # Make sure this exists
-import logging
+from utils import generate_code_from_prompt  # Ensure utils.py is in the same folder
 
 app = FastAPI()
 
-# ✅ Set up logging for debugging (especially helpful on mobile issues)
-logging.basicConfig(level=logging.INFO)
+# ✅ Update this with your actual frontend domain when deployed to Netlify
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",                # Local dev
+    "https://dancing-mousse-c5c6d5.netlify.app",        # Replace with your Netlify domain
+]
 
-# ✅ CORS Setup: Temporary allow all for mobile/device compatibility testing
+# ✅ CORS for frontend (dev + prod)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 🔁 TEMP: Allow all origins
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Schemas
+# ✅ Request message schema
 class ChatMessage(BaseModel):
     role: str  # 'user' or 'assistant'
     content: str
@@ -27,25 +29,14 @@ class ChatMessage(BaseModel):
 class CodeRequest(BaseModel):
     messages: List[ChatMessage]
 
-# ✅ Health Check
-@app.get("/")
-def root():
-    return {"message": "AI backend is live!"}
-
-# ✅ AI Code Generator Endpoint
 @app.post("/generate_code")
-async def generate_code(request: CodeRequest):
+def generate_code(request: CodeRequest):
     try:
-        # Log full incoming request for debugging
-        logging.info("Received messages: %s", request.messages)
-
-        # Optional validation
-        if not request.messages or not isinstance(request.messages, list):
-            raise HTTPException(status_code=400, detail="Invalid message format")
-
         code = generate_code_from_prompt(request.messages)
         return {"code": code}
-
     except Exception as e:
-        logging.error("Error during code generation: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error generating code: {str(e)}")
+
+@app.get("/")
+def health_check():
+    return {"message": "CopyPaste.ai backend is live ✅"}
