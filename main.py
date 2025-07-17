@@ -2,28 +2,22 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-from utils import generate_code_from_prompt  # Ensure utils.py is in the same folder
+from utils import generate_code_from_prompt
 
 app = FastAPI()
 
-# ✅ Update this with your actual frontend domain when deployed to Netlify
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",                # Local dev
-    "https://dancing-mousse-c5c6d5.netlify.app",        # Replace with your Netlify domain
-]
-
-# ✅ CORS for frontend (dev + prod)
+# ✅ Secure and flexible CORS for Netlify + localhost
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex="https://.*\.netlify\.app|http://localhost:3000",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Request message schema
+# ✅ Message schema
 class ChatMessage(BaseModel):
-    role: str  # 'user' or 'assistant'
+    role: str
     content: str
 
 class CodeRequest(BaseModel):
